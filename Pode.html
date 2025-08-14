@@ -1,0 +1,332 @@
+<!DOCTYPE html><html lang="pt-BR">  <head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />  
+  <title>Relógio em Tempo Real</title>  
+  <style>  
+    :root {  
+      --bg: #0b1020;  
+      --fg: #e9eef7;  
+      --muted: #a8b3cf;  
+      --card: #121a33;  
+      --accent: #7aa2ff;  
+      --accent-2: #20c997;  
+      --shadow: 0 10px 30px rgba(0,0,0,.35);  
+    }@media (prefers-color-scheme: light) {  
+  :root {  
+    --bg: #f7f9fc;  
+    --fg: #0b1020;  
+    --muted: #4c5a77;  
+    --card: #ffffff;  
+    --accent: #3b82f6;  
+    --accent-2: #059669;  
+    --shadow: 0 10px 25px rgba(0,0,0,.08);  
+  }  
+}  [data-theme="light"] {
+--bg: #f7f9fc;
+--fg: #0b1020;
+--muted: #4c5a77;
+--card: #ffffff;
+--accent: #3b82f6;
+--accent-2: #059669;
+--shadow: 0 10px 25px rgba(0,0,0,.08);
+}
+
+[data-theme="dark"] {
+--bg: #0b1020;
+--fg: #e9eef7;
+--muted: #a8b3cf;
+--card: #121a33;
+--accent: #7aa2ff;
+--accent-2: #20c997;
+--shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+{ box-sizing: border-box; }
+html, body { height: 100%; }
+
+
+body {
+margin: 0;
+font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+background: linear-gradient(160deg, var(--bg), #0e1530 60%);
+color: var(--fg);
+display: grid;
+place-items: center;
+}
+
+.wrap {
+width: min(980px, 92vw);
+padding: 28px;
+}
+
+.header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+margin-bottom: 18px;
+}
+
+.title {
+font-weight: 700;
+letter-spacing: .4px;
+font-size: clamp(18px, 2vw, 22px);
+opacity: .9;
+}
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.btn, .switch, select {
+background: var(--card);
+border: 1px solid rgba(255,255,255,.08);
+padding: 10px 14px;
+border-radius: 14px;
+box-shadow: var(--shadow);
+color: var(--fg);
+cursor: pointer;
+font-weight: 600;
+transition: transform .05s ease, border-color .2s ease, background .2s ease;
+user-select: none;
+}
+.btn:active, .switch:active { transform: scale(.98); }
+.btn[aria-pressed="true"], .switch[aria-pressed="true"] { border-color: var(--accent); }
+
+.clock {
+display: grid;
+gap: 14px;
+margin: 20px 0 24px;
+background: var(--card);
+border-radius: 24px;
+padding: clamp(18px, 4vw, 32px);
+box-shadow: var(--shadow);
+border: 1px solid rgba(255,255,255,.06);
+}
+
+.time {
+font-variant-numeric: tabular-nums;
+font-weight: 800;
+font-size: clamp(42px, 10vw, 88px);
+letter-spacing: .5px;
+line-height: 1;
+text-align: center;
+}
+
+.date {
+text-align: center;
+color: var(--muted);
+font-size: clamp(14px, 2.8vw, 18px);
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 12px;
+}
+
+.card {
+background: var(--card);
+border-radius: 18px;
+padding: 16px;
+border: 1px solid rgba(255,255,255,.08);
+box-shadow: var(--shadow);
+}
+
+.card h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: .3px; }
+.value { font-size: 20px; font-weight: 700; }
+.foot { margin-top: 12px; font-size: 12px; color: var(--muted); }
+.accent { color: var(--accent); }
+.accent2 { color: var(--accent-2); }
+
+footer { margin-top: 18px; text-align: center; color: var(--muted); font-size: 12px; }
+a { color: var(--accent); text-decoration: none; }
+
+  </style>  
+</head>  
+<body>  
+  <div class="wrap" id="app" data-theme="auto">  
+    <div class="header">  
+      <div class="title">🕒 Relógio & Data — Brasil (America/Sao_Paulo)</div>  
+      <div class="controls">  
+        <button id="toggle-12h" class="switch" aria-pressed="false">Formato 24h</button>  
+        <button id="toggle-sec" class="switch" aria-pressed="true">Mostrar segundos</button>  
+        <select id="theme">  
+          <option value="auto">Tema: Automático</option>  
+          <option value="light">Tema: Claro</option>  
+          <option value="dark">Tema: Escuro</option>  
+        </select>  
+        <button id="copy" class="btn">Copiar horário</button>  
+      </div>  
+    </div><section class="clock">  
+  <div id="time" class="time">--:--:--</div>  
+  <div id="date" class="date">Carregando…</div>  
+</section>  <section class="grid">  
+  <div class="card"><h3>Dia da semana</h3><div id="weekday" class="value">—</div></div>  
+  <div class="card"><h3>Mês</h3><div id="month" class="value">—</div></div>  
+  <div class="card"><h3>Dia do mês</h3><div id="day" class="value">—</div></div>  
+  <div class="card"><h3>Ano</h3><div id="year" class="value">—</div></div>  
+  <div class="card"><h3>Dia do ano</h3><div id="dayOfYear" class="value">—</div></div>  
+  <div class="card"><h3>Semana do ano (ISO)</h3><div id="week" class="value">—</div></div>  
+  <div class="card"><h3>Fuso horário</h3><div id="tz" class="value">America/Sao_Paulo</div></div>  
+  <div class="card"><h3>UTC agora</h3><div id="utc" class="value">—</div><div class="foot">Horário mundial</div></div>  
+  <div class="card"><h3>Bissexto?</h3><div id="leap" class="value">—</div></div>  
+</section>  <footer>  
+  Feito com ❤️ | Atualiza em tempo real | <span class="accent2">Funciona offline</span>  
+</footer>    </div>  <script>  
+    const TZ = 'America/Sao_Paulo';  const el = {  
+  time: document.getElementById('time'),  
+  date: document.getElementById('date'),  
+  weekday: document.getElementById('weekday'),  
+  month: document.getElementById('month'),  
+  day: document.getElementById('day'),  
+  year: document.getElementById('year'),  
+  dayOfYear: document.getElementById('dayOfYear'),  
+  week: document.getElementById('week'),  
+  tz: document.getElementById('tz'),  
+  utc: document.getElementById('utc'),  
+  leap: document.getElementById('leap'),  
+  toggle12h: document.getElementById('toggle-12h'),  
+  toggleSec: document.getElementById('toggle-sec'),  
+  theme: document.getElementById('theme'),  
+  copy: document.getElementById('copy'),  
+  app: document.getElementById('app')  
+};  
+
+// Load preferences  
+const prefs = JSON.parse(localStorage.getItem('clock:prefs') || '{}');  
+let showSeconds = prefs.showSeconds ?? true;  
+let use12h = prefs.use12h ?? false;  
+let theme = prefs.theme ?? 'auto';  
+
+function savePrefs(){  
+  localStorage.setItem('clock:prefs', JSON.stringify({showSeconds, use12h, theme}));  
+}  
+
+function setTheme(val){  
+  theme = val; savePrefs();  
+  el.app.setAttribute('data-theme', val);  
+  el.theme.value = val;  
+}  
+
+setTheme(theme);  
+el.toggleSec.setAttribute('aria-pressed', String(showSeconds));  
+el.toggle12h.setAttribute('aria-pressed', String(use12h));  
+
+const fmtTime = () => new Intl.DateTimeFormat('pt-BR', {  
+  timeZone: TZ,  
+  hour: '2-digit', minute: '2-digit', second: showSeconds ? '2-digit' : undefined,  
+  hour12: use12h  
+});  
+
+const fmtDate = new Intl.DateTimeFormat('pt-BR', {  
+  timeZone: TZ,  
+  weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'  
+});  
+
+const fmtWeekday = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, weekday: 'long' });  
+const fmtMonth = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, month: 'long' });  
+const fmtUTC = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit' });  
+
+function pad(n){ return String(n).padStart(2,'0'); }  
+
+function getDayOfYear(d){  
+  const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));  
+  const diff = (Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - start) / 86400000;  
+  return Math.floor(diff) + 1;  
+}  
+
+// ISO week number  
+function getISOWeek(date){  
+  const tmp = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));  
+  // Thursday in current week decides the year  
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay()||7));  
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(),0,1));  
+  const weekNo = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);  
+  return weekNo;  
+}  
+
+function isLeap(year){  
+  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);  
+}  
+
+function nowSP(){  
+  return new Date();  
+}  
+
+function update(){  
+  const now = nowSP();  
+
+  el.time.textContent = fmtTime().format(now).replace(/^24:/, '00:');  
+  el.date.textContent = capitalize(fmtDate.format(now));  
+
+  const fWeekday = fmtWeekday.format(now);  
+  const fMonth = fmtMonth.format(now);  
+
+  const parts = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' }).formatToParts(now);  
+  const day = parts.find(p=>p.type==='day').value;  
+  const monthNum = parts.find(p=>p.type==='month').value;  
+  const year = parts.find(p=>p.type==='year').value;  
+
+  el.weekday.textContent = capitalize(fWeekday);  
+  el.month.textContent = capitalize(fMonth);  
+  el.day.textContent = Number(day);  
+  el.year.textContent = year;  
+
+  // Compute DOY and ISO week for Sao Paulo timezone using offset trick  
+  const tzOffsetMs = getTZOffsetMs(TZ, now);  
+  const sp = new Date(now.getTime() + tzOffsetMs - now.getTimezoneOffset()*60000);  
+  el.dayOfYear.textContent = getDayOfYear(sp);  
+  el.week.textContent = getISOWeek(sp);  
+
+  el.utc.textContent = fmtUTC.format(now);  
+  el.leap.textContent = isLeap(Number(year)) ? 'Sim' : 'Não';  
+}  
+
+function capitalize(str){  
+  return str.charAt(0).toUpperCase() + str.slice(1);  
+}  
+
+// Estimate TZ offset (ms) using Intl timeZoneName shortOffset  
+function getTZOffsetMs(tz, date){  
+  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' });  
+  const parts = f.formatToParts(date);  
+  const off = parts.find(p=>p.type==='timeZoneName')?.value || 'UTC+00';  
+  const sign = off.includes('+') ? 1 : -1;  
+  const [h='0', m='0'] = (off.match(/[+\-](\d{2})(?::?(\d{2}))?/)||[]).slice(1);  
+  return sign * ((Number(h)||0) * 60 + (Number(m)||0)) * 60000;  
+}  
+
+// Controls  
+el.toggle12h.onclick = () => {  
+  use12h = !use12h; savePrefs();  
+  el.toggle12h.setAttribute('aria-pressed', String(use12h));  
+  el.toggle12h.textContent = use12h ? 'Formato 12h' : 'Formato 24h';  
+  update();  
+};  
+
+el.toggleSec.onclick = () => {  
+  showSeconds = !showSeconds; savePrefs();  
+  el.toggleSec.setAttribute('aria-pressed', String(showSeconds));  
+  el.toggleSec.textContent = showSeconds ? 'Mostrar segundos' : 'Ocultar segundos';  
+  update();  
+};  
+
+el.theme.onchange = (e) => setTheme(e.target.value);  
+
+el.copy.onclick = async () => {  
+  try {  
+    const text = `${el.time.textContent} — ${el.date.textContent} (${TZ})`;  
+    await navigator.clipboard.writeText(text);  
+    el.copy.textContent = 'Copiado!';  
+    setTimeout(()=> el.copy.textContent = 'Copiar horário', 1200);  
+  } catch {  
+    alert('Não foi possível copiar.');  
+  }  
+};  
+
+// Tick  
+update();  
+setInterval(update, 1000);
+
+</script></body>
+
+</html>
